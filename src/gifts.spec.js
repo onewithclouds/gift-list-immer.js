@@ -1,3 +1,6 @@
+// import { addGift, toggleReservation } from './gifts'; 
+import produce from "immer"
+
 const initialState = {
 
     users: [
@@ -34,9 +37,79 @@ const initialState = {
     ]
 }
 
+function addGift(state, id, description, image) {
+    return produce(state, draft => {
+	draft.gifts.push({
+	    id,
+	    description,
+	    image,
+	    reservedBy: undefined
+	})
+    })
+}
+
+
+function toggleReservation(state, giftId) {
+    return produce(state, draft => {
+	const gift = draft.gifts.find(gift => gift.id == giftId)
+	gift.reservedBy =
+	    gift.reservedBy === undefined
+	    ?
+	    state.currentUser.id
+	    :
+	    gift.reservedBy === state.currentUser.id
+	    ?
+	    undefined
+	    :
+	    gift.reservedBy
+    })
+}
+
+
+//const addGift = require('./gifts')
+//const toggleReservation = require('./gifts')
+
+/*
+
+function addGift(state, id, description, image) {
+    return {
+	...state,
+	gifts: [
+	    ...state.gifts,
+	    {
+		id,
+		description,
+		image,
+		reservedBy: undefined
+	    }
+	]
+    }
+}
+
+		
+
+function toggleReservation(state, giftId) {
+    return {
+	...state,
+	gifts: state.gifts.map( gift => {
+	    if (gift.id !== giftId) return gift
+	    return {
+		...gift,
+		reservedBy:
+		  gift.reservedBy === undefined ? state.currentUser.id
+		    : gift.reservedBy === state.currentUser.id ? undefined
+		    : gift.reservedBy 
+	    }
+	    
+	}
+			      )
+    }
+}
+
+*/
 
 describe("Reserving an unreserved gift", () => {
-    const nextState = addGift(initialState, "mug", "Coffee mug", "")
+    const nextState = addGift(initialState, "mug", "Coffee mug", "");
 
     test("added a gift to the collection", () => {
 	expect(nextState.gifts.length).toBe(3)
@@ -44,6 +117,26 @@ describe("Reserving an unreserved gift", () => {
 
     test("didn't modify the original state", () => {
 	expect(initialState.gifts.length).toBe(2)
+    })  
+})
+
+
+describe("Reserving an unreserved gift", () => {
+    const nextState = toggleReservation(initialState, "egghead_subscription")
+
+    test("correctly stores reservedBy", () => {
+	expect(nextState.gifts[1].reservedBy).toBe(1)
+    })
+    
+    test("didn't modify the original state", () => {
+	expect(initialState.gifts[1].reservedBy).toBe(undefined)
     })
 })
+
+describe("Reserving an already reserved gift", () => {
+    const nextState = toggleReservation(initialState, "immer_license")
     
+    test("preserved stored reservedBy", () => {
+	expect(nextState.gifts[0].reservedBy).toBe(2)
+    })
+})
